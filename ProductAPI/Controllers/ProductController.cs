@@ -21,20 +21,27 @@ namespace ProductAPI.Controllers
             return products;
         }
         [HttpGet("{id}")]
-        public ProductDto GetById(Guid id)
+        public ActionResult<ProductDto> GetById(Guid id)
         {
             var product = products.Where(x => x.Id == id).FirstOrDefault();
 
-            return product;
+            if (product == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(product);
         }
 
         [HttpPost]
-        public ProductDto PostProduct(CreateProductDto createProduct)
+        public ActionResult<ProductDto> PostProduct(CreateProductDto createProduct)
         {
             var product = new ProductDto(Guid.NewGuid(), createProduct.ProductName, createProduct.ProductPrice, DateTimeOffset.UtcNow, DateTimeOffset.UtcNow);
 
             products.Add(product);
-            return product;
+
+            //return Created("",product);
+            return CreatedAtAction(nameof(GetById), new { id = product.Id }, product);
         }
         [HttpPut]
         public ProductDto PullProduct(Guid id, UpdateProductDto updateProduct)
@@ -51,12 +58,16 @@ namespace ProductAPI.Controllers
             return product;
         }
         [HttpDelete]
-        public string DeleteProduct(Guid id)
+        public ActionResult<string> DeleteProduct(Guid id)
         {
             var index = products.FindIndex(x => x.Id == id);
             products.RemoveAt(index);
-            var returned = $"Product removed at: {index}";
-            return returned;
+
+            if (index == 0)
+            {
+                return NotFound();
+            }
+            return StatusCode(205, "Törölt record");
         }
     }
 }
